@@ -1,0 +1,148 @@
+using Microsoft.Speech.Recognition;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Windows.Forms;
+
+namespace Willy
+{
+    public partial class Willy : Form
+    {
+
+        private SpeechRecognitionEngine engine;
+        private CultureInfo ci;
+        public string NOME_ASSISTENTE = "Willy";
+
+
+        public Willy()
+        {
+            InitializeComponent();
+            Init();
+        }
+
+        private void Init()
+        {
+            try
+            {
+                ci = new CultureInfo("pt_BR");
+                engine = new SpeechRecognitionEngine(ci);
+
+                SpeechRec();
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "Erro ao Activar()");
+            }
+        }
+
+
+        private List<Grammar> Load_Grammar()
+        {
+            List<Grammar> GramaticaParaFala = new List<Grammar>();
+
+            #region Choises
+            Choices comandosDoSistema = new Choices();
+            comandosDoSistema.Add(Gramaticas.Quehorassao.ToArray());
+
+
+            #endregion
+            #region GrammarBuilder
+
+            GrammarBuilder comandosDoSistema_gb = new GrammarBuilder();
+            comandosDoSistema_gb.Append(comandosDoSistema);
+            #endregion
+            #region Grammar
+
+            Grammar gramatica_Sistema = new Grammar(comandosDoSistema_gb);
+            gramatica_Sistema.Name = "system";
+            #endregion
+
+            GramaticaParaFala.Add(gramatica_Sistema);
+
+            return GramaticaParaFala;
+        }
+
+
+        private void SpeechRec()
+        {
+            try
+            {
+
+                List<Grammar> g = Load_Grammar();
+
+                #region Speech Recognition (Eventos)
+                engine.SetInputToDefaultAudioDevice();
+
+                foreach (Grammar gr in g)
+                {
+                    engine.LoadGrammar(gr);
+                }
+
+                engine.SpeechRecognized += new EventHandler<SpeechRecognizedEventArgs>(Rec);
+                engine.AudioLevelUpdated += new EventHandler<AudioLevelUpdatedEventArgs>(AudioLevel);
+                engine.SpeechRecognitionRejected += new EventHandler<SpeechRecognitionRejectedEventArgs>(Rejected);
+
+                #endregion
+
+                engine.RecognizeAsync(RecognizeMode.Multiple); //Inicia o reconhecimento
+
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, "Erro ao SpeechRec()");
+            }
+
+
+        }
+
+        #region Eventos de Reconhecimento
+
+
+        private void Rec(object s, SpeechRecognizedEventArgs e) //  Entra se for Reconhecido.
+        {
+
+        }
+
+
+        private void AudioLevel(object s, AudioLevelUpdatedEventArgs e)
+        {
+
+            if (e.AudioLevel > BarraDeAudio.Maximum)
+            {
+                BarraDeAudio.Value = BarraDeAudio.Maximum;
+            }
+            else if (e.AudioLevel < BarraDeAudio.Minimum)
+            {
+                BarraDeAudio.Value = BarraDeAudio.Minimum;
+            }
+            else
+            {
+                BarraDeAudio.Value = e.AudioLevel;
+            }
+        }
+
+        private void Rejected(object s, SpeechRecognitionRejectedEventArgs e) // Aqui fica parado se nao entender a voz.
+        {
+
+        }
+
+        #endregion
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void BarraDeAudio_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void BarraDeAudio_Click_1(object sender, EventArgs e)
+        {
+
+        }
+    }
+}
